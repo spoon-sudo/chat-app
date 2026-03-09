@@ -16,11 +16,21 @@ public class ChatController {
     }
 
     @MessageMapping("/chat")
+    public void sendMessage(@Payload ChatMessage chatMessage) {
+        Message savedMessage = messageService.sendMessage(
+                chatMessage.getSenderId(),
+                chatMessage.getRecipientId(),
+                chatMessage.getMessageContent()
+        );
 
-    public Message sendMessage(@Payload ChatMessage chatMessage){
-        Message savedMessage = messageService.sendMessage(chatMessage.getSenderId(), chatMessage.getRecipientId(), chatMessage.getMessageContent());
-        messagingTemplate.convertAndSendToUser(chatMessage.getRecipientId().toString(), "/queue/messages", savedMessage);
-        return savedMessage;
+        messagingTemplate.convertAndSend(
+                "/user/" + chatMessage.getRecipientId().toString() + "/queue/messages",
+                savedMessage
+        );
+        messagingTemplate.convertAndSend(
+                "/user/" + chatMessage.getSenderId().toString() + "/queue/messages",
+                savedMessage
+        );
     }
 
 
